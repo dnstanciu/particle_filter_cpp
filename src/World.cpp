@@ -55,7 +55,7 @@ void World::drawMaze(cv::Mat& img)
 			{
 				Point pt1 = Point(j * maze_block_size.width, i * maze_block_size.height);
 				Point pt2 = Point(pt1.x +  maze_block_size.width, pt1.y + maze_block_size.height);
-				rectangle(img, pt1, pt2, CV_RGB(0, 0, 0), CV_FILLED);
+				rectangle(img, pt1, pt2, Scalar(0, 0, 0), FILLED);
 			}
 		}
 	}
@@ -64,5 +64,5 @@ void World::drawMaze(cv::Mat& img)
 void World::drawBeacons(cv::Mat& img)
 {
 	for(size_t i = 0; i < beacons.size(); ++i)
-		circle(img, beacons[i], 3, CV_RGB(255, 0, 0), CV_FILLED);
+		circle(img, beacons[i], 3, Scalar(0, 0, 255), FILLED);
 }
