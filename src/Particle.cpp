@@ -40,10 +40,10 @@ void Particle::DrawParticles(cv::Mat& img, const std::vector<Particle>& particle
 	for(size_t i = 0; i < particles.size(); ++i)
 	{
 		cv::Point pt1 = cv::Point(particles[i].x, particles[i].y);
-		cv::circle(img, pt1, 3, CV_RGB(255, 0, 255), CV_FILLED);
+		cv::circle(img, pt1, 3, cv::Scalar(255, 0, 255), cv::FILLED);
 
 		const int r = 8;
 		cv::Point pt2 = pt1 + cv::Point(cos(particles[i].h) * r, sin(particles[i].h) * r);
-		cv::line(img, pt1, pt2, CV_RGB(255, 0, 255), 1);
+		cv::line(img, pt1, pt2, cv::CV_RGB(255, 0, 255), 1);
 	}
 }
