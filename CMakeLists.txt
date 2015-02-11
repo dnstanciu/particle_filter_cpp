@@ -7,7 +7,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 include_directories(include)
 
-set(SOURCE_FILES src/main.cpp src/Particle.cpp src/Utils.cpp src/World.cpp)
+set(SOURCE_FILES src/main.cpp src/Particle.cpp src/Utils.cpp src/World.cpp src/ParticleFilterGUI.cpp)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "/home/dragos/DTC/PhD/particle_filter_cpp/bin")
 
