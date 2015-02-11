@@ -24,5 +24,7 @@ public:
 
 	static void CreateRandom(std::vector<Particle>& particles, const int count, const World& world);
 	static void DrawParticles(cv::Mat& img, const std::vector<Particle>& particles);
+
+    friend std::ostream& operator<<(std::ostream& os, const Particle& particle);
 };
 #endif
