@@ -21,3 +21,11 @@ double Utils::sample_uniform(double from, double to)
 	std::uniform_real_distribution<double> distribution(from,to);
 	return distribution(generator);
 }
+
+double Utils::w_Gaussian(double observation, double prediction)
+{
+    double sigma_sq = 100;
+    double error = observation - prediction;
+    double g = exp( - pow(error, 2) / (2*sigma_sq) );
+    return g;
+}

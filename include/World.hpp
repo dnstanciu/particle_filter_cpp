@@ -27,9 +27,13 @@ public:
 	double GetHeight() const {return height;}
 
     const std::vector< std::vector<int> >& getMaze() const { return maze; }
-
     const cv::Size getMazeBlockSize() const { return maze_block_size; }
 	const std::vector<cv::Point>& getBeacons() const { return beacons; }
+
+    // returns a random free place in the world
+    cv::Point get_random_free_place() const;
+    bool is_free(double x, double y) const;
+    double get_distance_to_nearest_beacon (double x, double y) const;
 
 };
 #endif

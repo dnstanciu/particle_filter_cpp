@@ -1,7 +1,10 @@
 #include "Particle.hpp"	
 #include "Utils.hpp"
-
+#include "boost/lambda/lambda.hpp"
+#include "boost/lambda/bind.hpp"
 #include <cmath>
+
+using namespace boost::lambda;
 
 Particle::Particle(double x_, double y_, double h_, double w_, bool noisy)
 {
@@ -23,6 +26,7 @@ Particle::~Particle()
 
 }
 
+
 void Particle::CreateRandom(std::vector<Particle>& particles, const int count, const World& world)
 {
 	particles.clear();
@@ -35,18 +39,96 @@ void Particle::CreateRandom(std::vector<Particle>& particles, const int count, c
 	}
 }
 
-void Particle::DrawParticles(cv::Mat& img, const std::vector<Particle>& particles)
+// get distance to the closest beacon (no noise)
+double Particle::read_sensor(const World& world)
 {
-    for(size_t i = 0; i < particles.size(); ++i)
-    {
-        cv::Point pt1 = cv::Point(particles[i].x, particles[i].y);
-        cv::circle(img, pt1, 3, cv::Scalar(255, 0, 255), cv::FILLED);
+    return world.get_distance_to_nearest_beacon(x, y);
+}
 
-        const int r = 8;
-        cv::Point pt2 = pt1 + cv::Point(cos(particles[i].h) * r, sin(particles[i].h) * r);
-        cv::line(img, pt1, pt2, cv::Scalar(255, 0, 255), 1);
+bool Particle::move(const World& world, double speed, bool check, bool noisy)
+{
+    if (noisy)
+    {
+        speed = Utils::add_noise(0.02, speed);
+        h = Utils::add_noise(0.1, h);
+    }
+
+    double delta_x = cos(h) * speed;
+    double delta_y = sin(h) * speed;
+
+    if (check)
+    {
+        // this is the robot
+        if ( world.is_free( this->x + delta_x, this->y + delta_y) )
+        {
+            this->x += delta_x;
+            this->y += delta_y;
+
+            return true;
+        } else
+        {
+            return false;
+        }
+    } else
+    {
+        this->x += delta_x;
+        this->y += delta_y;
+
+        return true;
     }
 }
+
+// updates particle weights - no normalisation because we're using Thrun's low variance sampler
+void Particle::update_particle_weights(std::vector<Particle>& particles, double observation, const World& world)
+{
+    double Z = observation;
+
+    // double eta = 0; // normaliser
+    for (size_t i = 0; i < particles.size(); ++i) {
+        if (world.is_free(particles[i].getX(), particles[i].getY())) {
+            double particle_dist = particles[i].read_sensor(world);
+
+            double new_w = Utils::w_Gaussian(Z, particle_dist);
+            particles[i].setW(new_w);
+            // eta += new_w;
+        }
+        else {
+            particles[i].setW(0);
+        }
+    }
+
+    // normalise weights
+    //if (eta)
+    //    for (size_t i = 0; i < particles.size(); ++i)
+    //        particles[i].setW(particles[i].getW() / eta);
+}
+
+// resample using low variance sampler (Probabilistic Robotics, p.110)
+void Particle::low_variance_sampler(std::vector<Particle> &particles)
+{
+    std::vector<Particle> new_particles;
+
+    int index = int( Utils::sample_uniform(0,1) * particles.size() );
+
+    double beta = 0;
+
+    std::vector<Particle>::const_iterator iter = std::max_element(particles.begin(), particles.end(), bind(&Particle::w, _2) > bind(&Particle::w, _1 ));
+    double max_w = iter->w;
+
+    for (size_t i = 0; i < particles.size(); ++i)
+    {
+        beta += Utils::sample_uniform(0, 1) * 2 * max_w;
+        while (beta > particles[index].w)
+        {
+            beta -= particles[index].w;
+            index = (index + 1) % particles.size();
+        }
+        new_particles.push_back(particles[index]);
+    }
+
+    particles = new_particles;
+}
+
 
 std::ostream &operator<<(std::ostream &os, const Particle &particle) {
     os << '(' << particle.x << ' ' << particle.y << ' ' << particle.h << ' ' << particle.w << ')';
