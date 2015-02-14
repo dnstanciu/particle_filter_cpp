@@ -65,7 +65,8 @@ int main(int argc, char const *argv[])
 
         // Particle::CreateRandom(particles, PARTICLES_COUNT, world);
         // resampling
-        Particle::low_variance_sampler(particles);
+        //Particle::low_variance_sampler(particles);
+        Particle::resampler(particles, world);
 
         // move robot
         double old_h = chappie.getH();
@@ -87,7 +88,7 @@ int main(int argc, char const *argv[])
         cv::imshow("Particle Filter Demo", view.getImage());
 
         // Press Q or ESC to exit the program
-        key = cv::waitKey(10);
+        key = cv::waitKey(5);
 	}
 	while(key != 'q' && key != 27);
 

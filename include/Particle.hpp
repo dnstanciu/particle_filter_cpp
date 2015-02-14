@@ -34,6 +34,8 @@ public:
     static void update_particle_weights(std::vector<Particle>& particles, double observation, const World& world);
     // resample using low variance sampler (Probabilistic Robotics, p.110)
     static void low_variance_sampler(std::vector<Particle>& particles);
+    // resample with distribution represented by cumulative sum array of weights
+    static void resampler(std::vector<Particle>& particles, const World& world);
 
 
     friend std::ostream& operator<<(std::ostream& os, const Particle& particle);

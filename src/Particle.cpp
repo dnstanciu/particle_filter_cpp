@@ -3,6 +3,7 @@
 #include "boost/lambda/lambda.hpp"
 #include "boost/lambda/bind.hpp"
 #include <cmath>
+#include <strings.h>
 
 using namespace boost::lambda;
 
@@ -83,14 +84,14 @@ void Particle::update_particle_weights(std::vector<Particle>& particles, double 
 {
     double Z = observation;
 
-    // double eta = 0; // normaliser
+    double eta = 0; // normaliser
     for (size_t i = 0; i < particles.size(); ++i) {
         if (world.is_free(particles[i].getX(), particles[i].getY())) {
             double particle_dist = particles[i].read_sensor(world);
 
             double new_w = Utils::w_Gaussian(Z, particle_dist);
             particles[i].setW(new_w);
-            // eta += new_w;
+            eta += new_w;
         }
         else {
             particles[i].setW(0);
@@ -98,9 +99,9 @@ void Particle::update_particle_weights(std::vector<Particle>& particles, double 
     }
 
     // normalise weights
-    //if (eta)
-    //    for (size_t i = 0; i < particles.size(); ++i)
-    //        particles[i].setW(particles[i].getW() / eta);
+    if (eta)
+        for (size_t i = 0; i < particles.size(); ++i)
+            particles[i].setW(particles[i].getW() / eta);
 }
 
 // resample using low variance sampler (Probabilistic Robotics, p.110)
@@ -126,6 +127,46 @@ void Particle::low_variance_sampler(std::vector<Particle> &particles)
         new_particles.push_back(particles[index]);
     }
 
+    particles = new_particles;
+}
+
+// resample with distribution represented by cumulative sum array of weights
+void Particle::resampler(std::vector<Particle> &particles, const World& world)
+{
+    std::vector<Particle> nonw0_particles;
+    std::vector<double> distribution;
+
+    for (size_t i = 0; i < particles.size(); ++i) {
+        double particle_w = particles[i].getW();
+        if (particle_w) {
+            nonw0_particles.push_back(particles[i]);
+            distribution.push_back(particle_w);
+        }
+    }
+
+    std::partial_sum(distribution.begin(), distribution.end(), distribution.begin());
+
+    std::vector<Particle> new_particles;
+    for (size_t i = 0; i < particles.size(); ++i)
+    {
+        std::vector<double>::iterator low;
+        low = std::lower_bound(distribution.begin(), distribution.end(), Utils::sample_uniform(0, 1));
+        int index = (low - distribution.begin());
+
+        if (nonw0_particles.size() != 0)
+        {
+            Particle new_particle(nonw0_particles[index].getX(), nonw0_particles[index].getY(),
+                    nonw0_particles[index].getH(), 1, true);
+            new_particles.push_back(new_particle);
+        }
+        else
+        {
+            // all particles had 0 weight
+            std::vector<Particle> new_particle;
+            Particle::CreateRandom(new_particle, 1, world);
+            new_particles.push_back(new_particle[0]);
+        }
+    }
     particles = new_particles;
 }
 
